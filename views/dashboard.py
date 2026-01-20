@@ -87,11 +87,7 @@ def show():
             conn.close()
         except: pass
 
-    # Metrikleri Göster (Standart Streamlit Metrikleri)
-    c1, c2, c3 = st.columns(3)
-    c1.metric("👥 Müşteriler", total_users)
-    c2.metric("💰 Krediler", f"{total_credits:,}")
-    c3.metric("⚡ Senaryolar", active_scenarios)
+   
 
     # --- ORTADA TEK TIKLANABİLİR İNDİRME KUTUSU ---
     st.write(""); st.write(""); st.write("")
@@ -114,3 +110,4 @@ def show():
         
         </a>
         """, unsafe_allow_html=True)
+
