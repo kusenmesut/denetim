@@ -1,7 +1,49 @@
 import streamlit as st
+import threading
+import time
+import requests
+import urllib3
 
-# --- SAYFA AYARLARI ---
+# --- SAYFA AYARLARI (En başta olmalı) ---
 st.set_page_config(page_title="Ghost CFO Office", page_icon="👻", layout="wide")
+
+# --- SSL UYARILARINI GİZLE ---
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+# --- ARKA PLAN UYANDIRMA SERVİSİ (Keep-Alive) ---
+# Hedef Sunucu (Senin Render API Adresin)
+TARGET_SERVER_URL = "https://ghostserver-rgyz.onrender.com"
+
+@st.cache_resource
+def start_keep_alive_service():
+    """
+    Bu fonksiyon uygulama başladığında SADECE BİR KERE çalışır.
+    Arka planda bir 'Daemon Thread' başlatır.
+    Bu thread her 30 saniyede bir sunucuya istek atar.
+    """
+    def run_pinger():
+        print("👻 Ghost Pinger Başlatıldı! (Her 30sn)")
+        while True:
+            try:
+                # Sunucuyu dürt (SSL hatasını yoksay, timeout 5sn)
+                requests.get(TARGET_SERVER_URL, verify=False, timeout=5)
+                # print("💓 Sunucuya sinyal gönderildi.") # Log kirliliği yapmasın diye kapalı
+            except Exception as e:
+                print(f"⚠️ Ping Hatası: {e}")
+            
+            # 30 Saniye Bekle (Senin isteğin üzerine)
+            time.sleep(30)
+
+    # Arka plan işçisini başlat (daemon=True sayesinde app kapanınca bu da ölür)
+    t = threading.Thread(target=run_pinger, daemon=True)
+    t.start()
+
+# Servisi Başlat (Sayfa her yenilendiğinde tekrar başlatmaz, cache kullanır)
+start_keep_alive_service()
+
+# ========================================================
+# --- AŞAĞISI SENİN MEVCUT TASARIM KODLARINDIR ---
+# ========================================================
 
 # --- CSS TASARIMI (Görsellerdeki Dark/Pink Teması) ---
 st.markdown("""
@@ -45,12 +87,11 @@ st.markdown("""
     }
 
     /* 4. 'GLASS' KARTLAR (İkincil Butonlar) */
-    /* Görseldeki kare kutucukları taklit ediyoruz */
     div.stButton > button[kind="secondary"] {
-        background-color: rgba(255, 255, 255, 0.03) !important; /* Çok şeffaf beyaz */
+        background-color: rgba(255, 255, 255, 0.03) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         color: #ffffff !important;
-        height: 140px !important; /* Kare görünümü */
+        height: 140px !important;
         width: 100% !important;
         border-radius: 12px !important;
         font-size: 1rem !important;
@@ -63,7 +104,6 @@ st.markdown("""
         box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     }
 
-    /* Kartların üzerine gelince pembe kenarlık */
     div.stButton > button[kind="secondary"]:hover {
         border-color: #f03a73 !important;
         background-color: rgba(255, 255, 255, 0.08) !important;
@@ -71,19 +111,17 @@ st.markdown("""
         box-shadow: 0 10px 20px rgba(240, 58, 115, 0.2);
     }
     
-    /* Seçili gibi görünen efekt (Aktif durum) */
     div.stButton > button[kind="secondary"]:active {
         background-color: #f03a73 !important;
         color: white !important;
     }
 
     /* 5. CTA BUTONU (Parlak Pembe) */
-    /* Görseldeki 'Request a Demo' butonu */
     div.stButton > button[kind="primary"] {
-        background-color: #f03a73 !important; /* Hot Pink */
+        background-color: #f03a73 !important;
         color: white !important;
         border: none !important;
-        border-radius: 50px !important; /* Hap şeklinde */
+        border-radius: 50px !important;
         padding: 0.8rem 3rem !important;
         font-size: 1.1rem !important;
         font-weight: 600 !important;
@@ -98,7 +136,6 @@ st.markdown("""
         transform: scale(1.05);
     }
 
-    /* Navbar hizalama */
     .nav-container {
         display: flex;
         justify_content: space-between;
@@ -116,17 +153,16 @@ from views import dashboard, messages, payments, reports, profile, support
 # --- LANDING PAGE (YENİ TASARIM) ---
 def show_landing_page():
     
-    # 1. NAVBAR (Basit Logo ve Login)
+    # 1. NAVBAR
     col_logo, col_space, col_login = st.columns([1, 6, 1])
     with col_logo:
-        # Şeffaf beyaz bir logo/ikon
         st.markdown("<h3 style='text-align:left !important; margin:0 !important;'>Ghost.</h3>", unsafe_allow_html=True)
     with col_login:
         if st.button("Giriş Yap", key="nav_login", type="primary"):
             st.session_state['page_state'] = 'login'
             st.rerun()
 
-    st.write("") # Boşluk
+    st.write("") 
     st.write("") 
 
     # 2. HERO METİNLERİ
@@ -134,47 +170,45 @@ def show_landing_page():
     st.markdown("<h3>v.1.0.</h3>", unsafe_allow_html=True)
     
     st.write("")
-    st.markdown("<p>WBulut Denetimi...</p>", unsafe_allow_html=True)
+    st.markdown("<p>Bulut Tabanlı Risk ve Denetim Platformu</p>", unsafe_allow_html=True)
     st.write("")
 
     # 3. KARTLAR (GRID YAPISI)
-    # Görseldeki 6 kutuyu oluşturuyoruz. 
-    # Not: Streamlit butonlarına HTML/Resim koymak zordur, bu yüzden Emoji + Metin kullanıyoruz.
-    
     c1, c2, c3, c4, c5, c6 = st.columns(6)
 
+    # Emoji kaçış karakterlerini düzelttim (örn: \R -> \\R veya direkt metin)
     with c1:
-        if st.button("🔌\\RİSK ANALİZ", key="card_1", type="secondary", use_container_width=True):
+        if st.button("🔌\nRİSK ANALİZ", key="card_1", type="secondary", use_container_width=True):
             st.session_state['show_register'] = True
             st.session_state['page_state'] = 'register'
             st.rerun()
 
     with c2:
-        if st.button("📑\MALİ TABLO ANALİZLERİ", key="card_2", type="secondary", use_container_width=True):
+        if st.button("📑\nMALİ TABLO\nANALİZLERİ", key="card_2", type="secondary", use_container_width=True):
             st.session_state['show_register'] = True
             st.session_state['page_state'] = 'register'
             st.rerun()
 
     with c3:
-        if st.button("📊\FIRSAT ANALİZLERİ", key="card_3", type="secondary", use_container_width=True):
+        if st.button("📊\nFIRSAT\nANALİZLERİ", key="card_3", type="secondary", use_container_width=True):
             st.session_state['show_register'] = True
             st.session_state['page_state'] = 'register'
             st.rerun()
 
     with c4:
-        if st.button("🔗\MANUEL DENETİM ROBOTU", key="card_4", type="secondary", use_container_width=True):
+        if st.button("🔗\nMANUEL DENETİM\nROBOTU", key="card_4", type="secondary", use_container_width=True):
             st.session_state['show_register'] = True
             st.session_state['page_state'] = 'register'
             st.rerun()
 
     with c5:
-        if st.button("☁️\KİŞİYE-SEKTÖRE ÖZEL SENARYOLAR", key="card_5", type="secondary", use_container_width=True):
+        if st.button("☁️\nKİŞİYE ÖZEL\nSENARYOLAR", key="card_5", type="secondary", use_container_width=True):
             st.session_state['show_register'] = True
             st.session_state['page_state'] = 'register'
             st.rerun()
             
     with c6:
-        if st.button("💰\VERİ MAHREMİYETİ", key="card_6", type="secondary", use_container_width=True):
+        if st.button("💰\nVERİ\nMAHREMİYETİ", key="card_6", type="secondary", use_container_width=True):
             st.session_state['show_register'] = True
             st.session_state['page_state'] = 'register'
             st.rerun()
@@ -183,8 +217,7 @@ def show_landing_page():
     st.write("")
     st.write("")
 
-    # 4. CTA BUTONU (BÜYÜK PEMBE)
-    # Butonu ortalamak için kolon kullanıyoruz
+    # 4. CTA BUTONU
     c_left, c_center, c_right = st.columns([1, 1, 1])
     with c_center:
         if st.button("Ücretsiz Demoyu Başlat →", key="main_cta", type="primary", use_container_width=True):
@@ -196,7 +229,6 @@ def show_landing_page():
 def main():
     # 1. State Yönetimi
     if 'page_state' not in st.session_state:
-        # Oturum yoksa Landing, varsa Dashboard
         if not check_authentication():
             st.session_state['page_state'] = 'landing'
         else:
@@ -214,15 +246,13 @@ def main():
 
     # -- KAYIT OL --
     elif state == 'register' or st.session_state.show_register:
-        # Geri Dön butonu için şık bir yerleşim
         st.markdown("<br>", unsafe_allow_html=True)
         col_back, col_rest = st.columns([1, 10])
         with col_back:
-            if st.button("←", type="secondary"): # Basit geri butonu
+            if st.button("←", type="secondary"):
                 st.session_state['page_state'] = 'landing'
                 st.session_state.show_register = False
                 st.rerun()
-        
         register_ui.show()
 
     # -- GİRİŞ YAP --
@@ -240,14 +270,13 @@ def main():
         else:
             show_login_page()
 
-    # -- DASHBOARD (Giriş Başarılı) --
+    # -- DASHBOARD --
     elif state == 'dashboard':
         if not check_authentication():
             st.session_state['page_state'] = 'login'
             st.rerun()
             return
 
-        # Sidebar Tasarımı (Koyu Tema Uyumlu)
         with st.sidebar:
             st.markdown("### Ghost Portal")
             st.markdown(f"👤 **{st.session_state.get('user_name', 'Kullanıcı')}**")
@@ -266,7 +295,6 @@ def main():
                 st.session_state['page_state'] = 'landing'
                 st.rerun()
 
-        # Sayfa İçerikleri
         if selected_page == "Ana Sayfa": dashboard.show()
         elif selected_page == "Raporlarım": reports.show()
         elif selected_page == "Ödemeler & Kredi": payments.show()
