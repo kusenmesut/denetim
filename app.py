@@ -3,6 +3,7 @@ import threading
 import time
 import requests
 import urllib3
+import tkinter as tk
 
 # --- SAYFA AYARLARI ---
 st.set_page_config(page_title="Ghost CFO Office", page_icon="👻", layout="wide")
@@ -196,7 +197,27 @@ def main():
         elif selected_page == "Ödemeler & Kredi": payments.show()
         elif selected_page == "Mesajlarım": messages.show()
         elif selected_page == "Profil": profile.show()
-        elif selected_page == "Destek": support.show()
+
+# 2. Uyandırma Fonksiyonunu Tanımla
+def wake_up_server_job():
+    """
+    Uygulama çalıştırıldığı an Render sunucusuna 'Uyan' sinyali gönderir.
+    GUI yüklenirken sunucu arkada ısınmış olur.
+    """
+    TARGET_URL = "https://ghostserver-rgyz.onrender.com"
+    try:
+        # verify=False: SSL hatasını yoksay
+        # timeout=3: 3 saniye içinde cevap gelmezse işlemi sal (Uygulamayı yavaşlatma)
+        requests.get(TARGET_URL, timeout=3, verify=False)
+        print("🚀 Sunucu uyandırma sinyali gönderildi (Background).")
+    except Exception as e:
+        # İnternet yoksa veya sunucu hatası varsa sessizce geç
+        pass
+
+# 3. İŞTE BURASI: Uygulama Başlamadan Hemen Önce Thread Başlat
+# Bu satır root = tk.Tk() satırından ÖNCE gelmeli.
+threading.Thread(target=wake_up_server_job, daemon=True).start()
+
 
 if __name__ == "__main__":
     main()
