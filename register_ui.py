@@ -17,8 +17,11 @@ def check_email_exists(email):
     return False
 
 def show():
+    # Geri Butonu: Landing yerine Giriş Ekranına dönsün istersen 'login' yapabilirsin
     if st.button("← Giriş Ekranına Dön"):
+        st.session_state['page_state'] = 'login'
         st.session_state.show_register = False
+        st.query_params["page"] = "login" # URL'yi güncelle
         st.rerun()
 
     st.title("👻 Yeni Hesap Oluştur")
@@ -49,15 +52,22 @@ def show():
                 if conn:
                     cur = conn.cursor()
                     pass_hash = hash_password(password)
-                    sql = "INSERT INTO users (email, password_hash, company_name, credits_balance, role, status, max_device_limit) VALUES (%s, %s, %s, 0, 'user', 'Pasif', 1)"
+                    # Varsayılan rol 'user', durum 'Aktif'
+                    sql = "INSERT INTO users (email, password_hash, company_name, credits_balance, role, status, max_device_limit) VALUES (%s, %s, %s, 0, 'user', 'Aktif', 1)"
                     cur.execute(sql, (email, pass_hash, company_name))
                     conn.commit()
                     cur.close()
                     conn.close()
-                    st.success("✅ Kayıt Başarılı! Yönetici onayı bekleniyor...")
-                    time.sleep(2)
-                    st.session_state.show_register = False
-                    st.rerun()
+                    
+                    st.success("✅ Kayıt Başarılı! Giriş ekranına yönlendiriliyorsunuz...")
+                    time.sleep(1.5) # Kullanıcının mesajı görmesi için kısa bekleme
+                    
+                    # --- YÖNLENDİRME KISMI ---
+                    st.session_state['page_state'] = 'login'  # Sayfa durumunu 'login' yap
+                    st.session_state.show_register = False    # Kayıt modunu kapat
+                    st.query_params["page"] = "login"         # URL'yi güncelle (F5 koruması için)
+                    st.rerun()                                # Sayfayı yenile
+                    
                 else:
                     st.error("Veritabanı bağlantı hatası.")
             except Exception as e:
