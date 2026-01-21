@@ -3,7 +3,6 @@ import threading
 import time
 import requests
 import urllib3
-import tkinter as tk
 
 # --- SAYFA AYARLARI ---
 st.set_page_config(page_title="Ghost CFO Office", page_icon="👻", layout="wide")
@@ -221,3 +220,4 @@ threading.Thread(target=wake_up_server_job, daemon=True).start()
 
 if __name__ == "__main__":
     main()
+
