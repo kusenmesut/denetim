@@ -220,4 +220,3 @@ threading.Thread(target=wake_up_server_job, daemon=True).start()
 
 if __name__ == "__main__":
     main()
-
